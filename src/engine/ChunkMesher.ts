@@ -2,10 +2,7 @@ import { umask } from "process";
 import {VoxelWorld, CHUNK_SIZE} from "./VoxelWorld";
 import {Coords, parseColor, MeshData, FACES, getSweepAndPlaneAxes, sliceToWorld, buildQuadCorners} from "./utils";
 
-export const meshChunk = (
-  world: VoxelWorld,
-  chunkCoords: Coords
-): MeshData => {
+export const meshChunk = (world: VoxelWorld, chunkCoords: Coords): MeshData => {
   const coriginCoords = {
     x: chunkCoords.x * CHUNK_SIZE,
     y: chunkCoords.y * CHUNK_SIZE,

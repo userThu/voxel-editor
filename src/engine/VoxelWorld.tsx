@@ -15,7 +15,7 @@ class Chunk {
 }
 
 class VoxelWorld {
-  chunks = new Map<string, Chunk>();
+  private chunks = new Map<string, Chunk>();
   private dirtyChunks = new Set<string>();
 
   /*
@@ -38,13 +38,6 @@ class VoxelWorld {
     const localCoords = worldToLocal(worldCoords);
     const encoded = encodeLocal(localCoords);
     chunk.voxels[encoded] = data;
-    // console.log(`
-    //   worldCoords: (${worldCoords.x}, ${worldCoords.y}, ${worldCoords.z})\n
-    //   chunkCoords: (${chunkCoords.x}, ${chunkCoords.y}, ${chunkCoords.z})\n
-    //   localCoords: (${localCoords.x}, ${localCoords.y}, ${localCoords.z})\n
-    //   encoded: ${encoded}\n
-    //   chunk.voxels[encoded]: ${chunk.voxels[encoded]?.color}\n
-    // `);
 
     this.markDirty(chunkCoords, localCoords);
   }
@@ -75,6 +68,10 @@ class VoxelWorld {
     const dirty = [...this.dirtyChunks];
     this.dirtyChunks.clear();
     return dirty;
+  }
+
+  requeueDirtyChunk(chunkKey: string): void {
+    this.dirtyChunks.add(chunkKey);
   }
 }
 

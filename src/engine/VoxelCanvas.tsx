@@ -3,9 +3,23 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { VoxelWorld, VoxelData } from './VoxelWorld';
+import { buildChunkMesh, updateChunkMesh } from './ChunkMesh';
+import { meshChunk } from './ChunkMesher';
+import { disposeScene } from './utils';
+
+const RED:   VoxelData = { color: [255, 0,   0  ], material: 0 };
+const GREEN: VoxelData = { color: [0,   255, 0  ], material: 0 };
+const BLUE:  VoxelData = { color: [0,   0,   255], material: 0 };
 
 export default function VoxelCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const world = new VoxelWorld();
+  for (let x = 0; x < 2; x++)
+  for (let y = 0; y < 2; y++)
+  for (let z = 0; z < 2; z++)
+    world.setVoxel({x: x, y:y, z:z}, GREEN);
+  const chunkMeshes = new Map<string, THREE.Mesh>();
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -27,6 +41,7 @@ export default function VoxelCanvas() {
     scene.background = new THREE.Color(0xfffcf2);
 
     grid.position.set(8,0,8);
+    scene.add(grid);
 
     // Camera init
     camera.position.set(24, 16, 24); // Places camera at world/three coordinates
@@ -41,27 +56,47 @@ export default function VoxelCanvas() {
     // Lighting init
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // (color, intensity)
     scene.add(ambientLight);
-
-    // Test geometry — replace with voxel chunk meshes
-    const cube = new THREE.Mesh(
-      new THREE.BoxGeometry(1, 1, 1),
-      new THREE.MeshLambertMaterial({ color: 0x4caf50 })
-    );
-    cube.position.set(.5,.5,.5);
-    scene.add(cube);
-    scene.add(grid);
-
-
+    
     // Render loop
     let frameId: number;
     function tick() {
       frameId = requestAnimationFrame(tick);
       controls.update();
       renderer.render(scene, camera);
+
+      const deadline = performance.now() + 2;
+      for (const chunkKey of world.popDirtyChunks()) {
+        if (performance.now() > deadline) {
+          // Ran out of frame budget — re-queue remainder
+          world.requeueDirtyChunk(chunkKey);
+          break;
+        }
+        const [cx, cy, cz]= chunkKey.split(',').map(Number);
+        const meshData = meshChunk(world, {x:cx, y:cy, z:cz});
+
+        if (meshData.vertexCount === 0) {
+          // Chunk is empty — remove mesh from scene and state
+          if (chunkMeshes.has(chunkKey)) {
+            scene.remove(chunkMeshes.get(chunkKey)!);
+            chunkMeshes.delete(chunkKey);
+          }
+          continue;
+        }
+
+        if (chunkMeshes.has(chunkKey)) {
+          updateChunkMesh(chunkMeshes.get(chunkKey)!, meshData);
+        } else {
+          const mesh = buildChunkMesh(meshData);
+          scene.add(mesh);
+          chunkMeshes.set(chunkKey, mesh);
+        }
+      }
+      renderer.render(scene, camera);
     }
     tick();
 
     const handleResize = () => {
+      console.log("resized");
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
       camera.aspect = w / h;
@@ -77,9 +112,10 @@ export default function VoxelCanvas() {
         cancelAnimationFrame(frameId);
         renderer.dispose();
         controls.dispose();
+        disposeScene(scene);
+        window.removeEventListener('resize', handleResize);
     }
   }, []);
     
-
   return <canvas ref={canvasRef} style={{ width: '100%', height: '100vh', display: 'block' }} />;
 }

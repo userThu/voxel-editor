@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 // The three possible world axes, used as indices into [x, y, z] arrays
 export type Coords = {
     x: number;
@@ -175,4 +177,13 @@ const parseColor = (key: string): RGBColor => {
     return [colors[0], colors[1], colors[2]] as RGBColor;
 }
 
-export {getSweepAndPlaneAxes, sliceToWorld, buildQuadCorners, parseColor}
+const disposeScene = (scene: THREE.Scene): void => {
+  scene.traverse((object) => {
+    if (object instanceof THREE.Mesh) {
+      object.geometry.dispose();
+      object.material.dispose();
+    }
+  });
+}
+
+export {getSweepAndPlaneAxes, sliceToWorld, buildQuadCorners, parseColor, disposeScene}
