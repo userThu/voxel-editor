@@ -1,55 +1,63 @@
 // components/Toolbar.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tool } from '@/engine/utils';
+import './Toolbar.css';
 
 type Props = {
   onToolChange: (tool: Tool) => void;
 };
 
-const TOOLS: { id: Tool; label: string; icon: string }[] = [
-  { id: 'move',  label: 'Move',  icon: '✥' },
-  { id: 'place',  label: 'Place',  icon: '✏️' },
-  { id: 'remove', label: 'Remove', icon: '⬜' },
+const TOOLS: { id: Tool; label: string; icon: string; shortcut: string }[] = [
+  { id: 'move',   label: 'Move',   icon: '✥', shortcut: 'M' },
+  { id: 'place',  label: 'Place',  icon: '✏️', shortcut: 'B' },
+  { id: 'remove', label: 'Remove', icon: '⌫', shortcut: 'E' },
 ];
+
+const shortcuts: Record<string, Tool> = {
+  m: 'move',
+  b: 'place',
+  e: 'remove',
+};
 
 export default function Toolbar({ onToolChange }: Props) {
   const [activeTool, setActiveTool] = useState<Tool>('move');
+
+  const onKeyDown = (event: KeyboardEvent) => {
+    // Ignore if user is typing in an input
+    if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+
+    const tool = shortcuts[event.key.toLowerCase()];
+    if (tool) handleToolClick(tool);
+  };
+
+  useEffect(() => {
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   const handleToolClick = (tool: Tool) => {
     setActiveTool(tool);
     onToolChange(tool);
   };
 
-  return (
-    <div style={{
-      position: 'absolute',
-      top: 16,
-      left: 16,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 8,
-      zIndex: 10,
-    }}>
-      {TOOLS.map(({ id, label, icon }) => (
+   return (
+  <div className="toolbar">
+    {TOOLS.map(({ id, label, icon, shortcut }, i) => (
+      <div key={id}>
+        {i > 0 && <div className="toolbar-divider" />}
         <button
-          key={id}
           onClick={() => handleToolClick(id)}
-          title={label}
-          style={{
-            width: 44,
-            height: 44,
-            fontSize: 20,
-            cursor: 'pointer',
-            border: '2px solid',
-            borderRadius: 8,
-            background: activeTool === id ? '#4caf50' : '#1e1e2e',
-            borderColor: activeTool === id ? '#81c784' : '#444',
-            color: '#fff',
-          }}
+          className={`toolbar-btn${activeTool === id ? ' active' : ''}`}
+          aria-label={label}
         >
           {icon}
+          <span className="toolbar-tooltip">
+            {label}
+            <span className="shortcut">{shortcut}</span>
+          </span>
         </button>
-      ))}
-    </div>
-  );
+      </div>
+    ))}
+  </div>
+);
 }

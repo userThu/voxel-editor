@@ -1,4 +1,3 @@
-import { umask } from "process";
 import {VoxelWorld, CHUNK_SIZE} from "./VoxelWorld";
 import {Coords, parseColor, MeshData, FACES, getSweepAndPlaneAxes, sliceToWorld, buildQuadCorners} from "./utils";
 

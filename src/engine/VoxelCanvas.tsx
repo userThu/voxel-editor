@@ -3,11 +3,12 @@
 import { useEffect, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { VoxelWorld, VoxelData } from './VoxelWorld';
+import { VoxelWorld } from './VoxelWorld';
 import { buildChunkMesh } from './ChunkMesh';
 import { meshChunk } from './ChunkMesher';
 import { disposeScene, Tool } from './utils';
 import { setupMouseEvents, setupHoverHighlight, updateCursor } from './Tools';
+import ColorPicker from '@/components/ColorPicker';
 import Toolbar from '@/components/Toolbar';
 
 export default function VoxelCanvas() {
@@ -17,7 +18,7 @@ export default function VoxelCanvas() {
 
   const activeToolRef = useRef<Tool>('move');
   const controlsRef = useRef<OrbitControls | null>(null);
-  const activeColorRef = useRef<[number, number, number]>([255, 0, 0]);
+  const activeColorRef = useRef<[number, number, number]>([255, 255, 255]);
 
   const handleToolChange = useCallback((tool: Tool) => {
     activeToolRef.current = tool;
@@ -41,6 +42,10 @@ export default function VoxelCanvas() {
     if (canvasRef.current) {
         updateCursor(canvasRef.current, tool);
     }
+  }, []);
+
+  const handleColorChange = useCallback((color: [number, number, number]) => {
+    activeColorRef.current = color;
   }, []);
 
   useEffect(() => {
@@ -156,6 +161,7 @@ export default function VoxelCanvas() {
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
         <canvas ref={canvasRef} style={{ width: '100%', height: '100vh', display: 'block' }} />
         <Toolbar onToolChange={handleToolChange} />
+        <ColorPicker onColorChange={handleColorChange}/>
     </div>
   )
 }

@@ -1,7 +1,5 @@
 import {Coords, RGBColor, CHUNK_SIZE} from "./utils";
 
-
-
 export type VoxelData = {
   color: RGBColor;
   material: number;

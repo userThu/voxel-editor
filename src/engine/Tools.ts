@@ -163,7 +163,7 @@ function setupHoverHighlight(scene: THREE.Scene): {
           groundPos[2] + 0.5,
         );
         if (color) {
-          ghostMat.color.setRGB(...color);
+          ghostMat.color.setRGB(color[0] / 255, color[1] / 255, color[2] / 255);
         }
       } else {
         ghostBlock.visible = false;
