@@ -6,9 +6,26 @@ const material = new THREE.MeshLambertMaterial({
   vertexColors: true,  // use our per-vertex color data
 });
 
-function buildChunkMesh(data: MeshData): THREE.Mesh {
-  const geometry = new THREE.BufferGeometry();
+function buildChunkMesh(
+  scene: THREE.Scene,
+  chunkMeshes: Map<string, THREE.Mesh>,
+  chunkKey: string,
+  data: MeshData,
+) {
+  // Remove and dispose existing mesh if present
+  if (chunkMeshes.has(chunkKey)) {
+    const existing = chunkMeshes.get(chunkKey)!;
+    existing.geometry.dispose();
+    scene.remove(existing);
+    // Do not dispose material — it is shared across all chunks
+    chunkMeshes.delete(chunkKey);
+  }
 
+  // Empty chunk — no mesh needed
+  if (data.vertexCount === 0) return;
+
+  // Build fresh geometry at the correct size
+  const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position',
     new THREE.BufferAttribute(data.positions, 3));
   geometry.setAttribute('normal',
@@ -17,26 +34,11 @@ function buildChunkMesh(data: MeshData): THREE.Mesh {
     new THREE.BufferAttribute(data.colors, 3));
   geometry.setIndex(
     new THREE.BufferAttribute(data.indices, 1));
+  geometry.computeBoundingSphere();
 
-  return new THREE.Mesh(geometry, material);
+  const mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
+  chunkMeshes.set(chunkKey, mesh);
 }
 
-// To update an existing chunk mesh without creating a new Three.js object:
-function updateChunkMesh(mesh: THREE.Mesh, data: MeshData) {
-  const geo = mesh.geometry as THREE.BufferGeometry;
-  // position
-  (geo.attributes.position as THREE.BufferAttribute).array = data.positions;
-  (geo.attributes.position as THREE.BufferAttribute).needsUpdate = true;
-  // normal
-  (geo.attributes.normal as THREE.BufferAttribute).array = data.normals;
-  (geo.attributes.normal as THREE.BufferAttribute).needsUpdate = true;
-  // color
-  (geo.attributes.color as THREE.BufferAttribute).array = data.colors;
-  (geo.attributes.color as THREE.BufferAttribute).needsUpdate = true;
-  // index
-  (geo.index as THREE.BufferAttribute).array = data.indices;
-  (geo.index as THREE.BufferAttribute).needsUpdate = true;
-  geo.computeBoundingSphere(); // needed for frustum culling
-}
-
-export {buildChunkMesh, updateChunkMesh};
+export {buildChunkMesh};

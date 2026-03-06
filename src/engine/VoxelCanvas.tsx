@@ -1,25 +1,47 @@
 // components/VoxelCanvas.tsx
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VoxelWorld, VoxelData } from './VoxelWorld';
-import { buildChunkMesh, updateChunkMesh } from './ChunkMesh';
+import { buildChunkMesh } from './ChunkMesh';
 import { meshChunk } from './ChunkMesher';
-import { disposeScene } from './utils';
-
-const RED:   VoxelData = { color: [255, 0,   0  ], material: 0 };
-const GREEN: VoxelData = { color: [0,   255, 0  ], material: 0 };
-const BLUE:  VoxelData = { color: [0,   0,   255], material: 0 };
+import { disposeScene, Tool } from './utils';
+import { setupMouseEvents, setupHoverHighlight, updateCursor } from './Tools';
+import Toolbar from '@/components/Toolbar';
 
 export default function VoxelCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const world = new VoxelWorld();
-  for (let x = 0; x < 2; x++)
-  for (let y = 0; y < 2; y++)
-  for (let z = 0; z < 2; z++)
-    world.setVoxel({x: x, y:y, z:z}, GREEN);
   const chunkMeshes = new Map<string, THREE.Mesh>();
+
+  const activeToolRef = useRef<Tool>('move');
+  const controlsRef = useRef<OrbitControls | null>(null);
+  const activeColorRef = useRef<[number, number, number]>([255, 0, 0]);
+
+  const handleToolChange = useCallback((tool: Tool) => {
+    activeToolRef.current = tool;
+    if (controlsRef.current) {
+        const isMove = tool === 'move';
+        if (isMove) {
+            console.log("wat");
+          controlsRef.current.mouseButtons = {
+            LEFT: THREE.MOUSE.PAN,
+            MIDDLE: THREE.MOUSE.DOLLY,
+            RIGHT: THREE.MOUSE.ROTATE,
+          };
+        } else {
+          controlsRef.current.mouseButtons = {
+            LEFT: null,
+            MIDDLE: THREE.MOUSE.DOLLY,
+            RIGHT: THREE.MOUSE.ROTATE,
+          };
+        }
+    }
+    if (canvasRef.current) {
+        updateCursor(canvasRef.current, tool);
+    }
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -52,10 +74,27 @@ export default function VoxelCanvas() {
     controls.screenSpacePanning = false;
     controls.minDistance = 5;
     controls.maxDistance = 200;
+    controls.enabled = true;
+    controlsRef.current = controls;
+
+    // Controls init
+    controlsRef.current.mouseButtons = {
+      LEFT: THREE.MOUSE.PAN,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.ROTATE,
+    };
 
     // Lighting init
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // (color, intensity)
     scene.add(ambientLight);
+
+    // Mouse events
+    const hoverHighlight = setupHoverHighlight(scene);
+    const cleanupMouse = setupMouseEvents(
+      canvas, camera, world,
+      activeToolRef, activeColorRef,
+      hoverHighlight
+    );
     
     // Render loop
     let frameId: number;
@@ -83,13 +122,7 @@ export default function VoxelCanvas() {
           continue;
         }
 
-        if (chunkMeshes.has(chunkKey)) {
-          updateChunkMesh(chunkMeshes.get(chunkKey)!, meshData);
-        } else {
-          const mesh = buildChunkMesh(meshData);
-          scene.add(mesh);
-          chunkMeshes.set(chunkKey, mesh);
-        }
+        buildChunkMesh(scene, chunkMeshes, chunkKey,meshData);
       }
       renderer.render(scene, camera);
     }
@@ -109,6 +142,8 @@ export default function VoxelCanvas() {
     // Clean-up upon dismount
     frameId = requestAnimationFrame(tick);
     return () => {
+        cleanupMouse();
+        hoverHighlight.dispose();
         cancelAnimationFrame(frameId);
         renderer.dispose();
         controls.dispose();
@@ -117,5 +152,10 @@ export default function VoxelCanvas() {
     }
   }, []);
     
-  return <canvas ref={canvasRef} style={{ width: '100%', height: '100vh', display: 'block' }} />;
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
+        <canvas ref={canvasRef} style={{ width: '100%', height: '100vh', display: 'block' }} />
+        <Toolbar onToolChange={handleToolChange} />
+    </div>
+  )
 }
