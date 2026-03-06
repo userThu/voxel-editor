@@ -1,36 +1,75 @@
 import * as THREE from 'three';
-import { CHUNK_SIZE, Plane } from './utils';
+import { CHUNK_SIZE, Plane, ChunkDimensions } from './utils';
 
-const HALF = CHUNK_SIZE / 2;
+const VOXELS_PER_CHUNK = 16;
 const COLOR_CENTER = 0x888888;
 const COLOR_GRID   = 0x444444;
 
-const setupChunkGrids = (scene: THREE.Scene): {
-  setVisible: (visible: [boolean, boolean, boolean]) => void;
-  dispose: () => void;
-} => {
-  // XZ plane (floor) — sits at y=0
-  const floorGrid = new THREE.GridHelper(CHUNK_SIZE, CHUNK_SIZE, COLOR_CENTER, COLOR_GRID);
-  floorGrid.position.set(HALF, 0, HALF);
+const setupChunkGrids = (scene: THREE.Scene, initialDims: ChunkDimensions = { x: 1, y: 1, z: 1 }) => {
+  let grids: THREE.LineSegments[] = [];
 
-  // XY plane (front face) — rotate around X, sits at z=0
-  const frontGrid = new THREE.GridHelper(CHUNK_SIZE, CHUNK_SIZE, COLOR_CENTER, COLOR_GRID);
-  frontGrid.rotation.x = Math.PI / 2;
-  frontGrid.position.set(HALF, HALF, 0);
+  const rebuild = (dims: ChunkDimensions) => {
+    grids.forEach(g => {
+      g.geometry.dispose();
+      (g.material as THREE.Material).dispose();
+      scene.remove(g);
+    });
+    grids = [];
 
-  // YZ plane (side face) — rotate around Z, sits at x=0
-  const sideGrid = new THREE.GridHelper(CHUNK_SIZE, CHUNK_SIZE, COLOR_CENTER, COLOR_GRID);
-  sideGrid.rotation.z = Math.PI / 2;
-  sideGrid.position.set(0, HALF, HALF);
+    // World-space dimensions
+    const wx = dims.x * VOXELS_PER_CHUNK;
+    const wy = dims.y * VOXELS_PER_CHUNK;
+    const wz = dims.z * VOXELS_PER_CHUNK;
 
-  const grids = [floorGrid, frontGrid, sideGrid];
-  grids.forEach(g => scene.add(g));
+    // XZ — floor, spans wx × wz, sits at y=0
+    // grid lines in X and Z directions, no rotation needed
+    const xzPoints: number[] = [];
+    for (let i = 0; i <= dims.z * VOXELS_PER_CHUNK; i++) {
+      xzPoints.push(0, 0, i,  wx, 0, i);
+    }
+    for (let i = 0; i <= dims.x * VOXELS_PER_CHUNK; i++) {
+      xzPoints.push(i, 0, 0,  i, 0, wz);
+    }
+    const xzGeo = new THREE.BufferGeometry();
+    xzGeo.setAttribute('position', new THREE.Float32BufferAttribute(xzPoints, 3));
+    const xzGrid = new THREE.LineSegments(xzGeo, new THREE.LineBasicMaterial({ color: COLOR_GRID }));
+
+    // XY — front face, spans wx × wy, sits at z=0
+    const xyPoints: number[] = [];
+    for (let i = 0; i <= wy; i++) {
+      xyPoints.push(0, i, 0,  wx, i, 0);
+    }
+    for (let i = 0; i <= wx; i++) {
+      xyPoints.push(i, 0, 0,  i, wy, 0);
+    }
+    const xyGeo = new THREE.BufferGeometry();
+    xyGeo.setAttribute('position', new THREE.Float32BufferAttribute(xyPoints, 3));
+    const xyGrid = new THREE.LineSegments(xyGeo, new THREE.LineBasicMaterial({ color: COLOR_GRID }));
+
+    // YZ — side face, spans wz × wy, sits at x=0
+    const yzPoints: number[] = [];
+    for (let i = 0; i <= wy; i++) {
+      yzPoints.push(0, i, 0,  0, i, wz);
+    }
+    for (let i = 0; i <= wz; i++) {
+      yzPoints.push(0, 0, i,  0, wy, i);
+    }
+    const yzGeo = new THREE.BufferGeometry();
+    yzGeo.setAttribute('position', new THREE.Float32BufferAttribute(yzPoints, 3));
+    const yzGrid = new THREE.LineSegments(yzGeo, new THREE.LineBasicMaterial({ color: COLOR_GRID }));
+
+    grids = [xzGrid, xyGrid, yzGrid];
+    grids.forEach(g => scene.add(g));
+  };
+
+  rebuild(initialDims);
 
   return {
     setVisible(visible: [boolean, boolean, boolean]) {
-      grids[0].visible = visible[0];
-      grids[1].visible = visible[1];
-      grids[2].visible = visible[2];
+      grids.forEach((g, i) => g.visible = visible[i]);
+    },
+    resize(dims: ChunkDimensions) {
+      rebuild(dims);
     },
     dispose() {
       grids.forEach(g => {
@@ -40,6 +79,6 @@ const setupChunkGrids = (scene: THREE.Scene): {
       });
     }
   };
-}
+};
 
 export {setupChunkGrids};

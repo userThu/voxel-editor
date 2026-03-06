@@ -49,17 +49,17 @@ function setupMouseEvents(
         const px = hit.voxel[0] + hit.face[0];
         const py = hit.voxel[1] + hit.face[1];
         const pz = hit.voxel[2] + hit.face[2];
-        if (inBounds(px, py, pz)) {
-            world.setVoxel({ x: px, y: py, z: pz }, { color: activeColorRef.current, material: 0 });
+        if (inBounds(px, py, pz, world.getWorldSize())) {
+            world.setVoxel({ x: px, y: py, z: pz }, { color: [...activeColorRef.current], material: 0 });
         }
       } else {
-        const groundPos = rayPlaneIntersection(origin, direction, activePlanes.current);
+        const groundPos = rayPlaneIntersection(world, origin, direction, activePlanes.current);
         if (groundPos) {
           world.setVoxel(
-          {x:groundPos[0],
-          y:groundPos[1],
-          z:groundPos[2]},
-          { color: activeColorRef.current, material: 0 }
+            {x:groundPos[0],
+            y:groundPos[1],
+            z:groundPos[2]},
+            { color: [...activeColorRef.current], material: 0 }
           );
         }
       }
@@ -84,7 +84,7 @@ function setupMouseEvents(
     const { ndcX, ndcY } = mouseToNDC(e, canvas);
     const { origin, direction } = getRayFromCamera(ndcX, ndcY, camera);
     const hit = dda(world, origin, direction, 50);
-    const groundPos = rayPlaneIntersection(origin, direction, activePlanes.current);
+    const groundPos = rayPlaneIntersection(world, origin, direction, activePlanes.current);
 
     hoverHighlight.update(hit, groundPos, activeColorRef.current);
   };

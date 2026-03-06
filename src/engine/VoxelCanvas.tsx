@@ -6,7 +6,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VoxelWorld } from './VoxelWorld';
 import { buildChunkMesh } from './ChunkMesh';
 import { meshChunk } from './ChunkMesher';
-import { disposeScene, Tool, Plane } from './utils';
+import { disposeScene, Tool, Plane, ChunkDimensions } from './utils';
 import { setupMouseEvents, setupHoverHighlight, updateCursor } from './Tools';
 import {setupChunkGrids} from './Grids';
 import Panel from '@/components/Panel';
@@ -14,12 +14,14 @@ import Toolbar from '@/components/Toolbar';
 
 export default function VoxelCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const world = new VoxelWorld();
+  const worldRef = useRef<VoxelWorld | null>(null);
+  if (!worldRef.current) worldRef.current = new VoxelWorld();
+  const world = worldRef.current;
   const chunkMeshes = new Map<string, THREE.Mesh>();
-
+  
   const activeToolRef = useRef<Tool>('move');
   const controlsRef = useRef<OrbitControls | null>(null);
-  const activeColorRef = useRef<[number, number, number]>([255, 255, 255]);
+  const activeColorRef = useRef<[number, number, number]>([255, 0, 0]);
   const activePlanesRef = useRef<Plane>([true, true, true]);
   const chunkGridsRef = useRef<ReturnType<typeof setupChunkGrids> | null>(null);
 
@@ -56,6 +58,13 @@ export default function VoxelCanvas() {
 
   const handleColorChange = useCallback((color: [number, number, number]) => {
     activeColorRef.current = color;
+  }, []);
+
+  const handleDimensionsChange = useCallback((dims: ChunkDimensions) => {
+    if (chunkGridsRef.current) {
+      chunkGridsRef.current.resize(dims);
+      world.setWorldSize({x:dims.x*16, y:dims.y*16, z:dims.z*16});
+    }
   }, []);
 
   useEffect(() => {
@@ -172,7 +181,7 @@ export default function VoxelCanvas() {
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
         <canvas ref={canvasRef} style={{ width: '100%', height: '100vh', display: 'block' }} />
         <Toolbar onToolChange={handleToolChange} />
-        <Panel onColorChange={handleColorChange} onPlanesChange={handlePlanesChange}/>
+        <Panel onColorChange={handleColorChange} onPlanesChange={handlePlanesChange} onDimensionsChange={handleDimensionsChange}/>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import {Coords, RGBColor, CHUNK_SIZE} from "./utils";
+import {Coords, RGBColor, CHUNK_SIZE, ChunkDimensions} from "./utils";
 
 export type VoxelData = {
   color: RGBColor;
@@ -15,6 +15,7 @@ class Chunk {
 class VoxelWorld {
   private chunks = new Map<string, Chunk>();
   private dirtyChunks = new Set<string>();
+  private worldSize: ChunkDimensions = { x: 16, y: 16, z: 16 };
 
   /*
     Takes in chunk coordinates and encodes it as `key`
@@ -27,6 +28,18 @@ class VoxelWorld {
       this.chunks.set(key, new Chunk());
     }
     return this.chunks.get(key)!;
+  }
+
+  setWorldSize(dims: ChunkDimensions) {
+    if (dims.x % 16 === 0 && dims.y % 16 === 0 && dims.z % 16 === 0) {
+      console.log(`set worldSize: ${JSON.stringify(dims)}`);
+      this.worldSize = dims;
+    }
+  }
+
+  getWorldSize(): ChunkDimensions {
+    console.log(`get worldSize: ${JSON.stringify(this.worldSize)}`);
+    return this.worldSize;
   }
 
   setVoxel(worldCoords: Coords, data: VoxelData | null) {

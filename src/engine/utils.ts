@@ -11,6 +11,8 @@ export type Coords = {
     z: number;
 };
 
+export type ChunkDimensions = { x: number; y: number; z: number };
+
 export type Tool = 'move' | 'place' | 'remove';
 
 export type Axis = 0 | 1 | 2; // 0=X, 1=Y, 2=Z

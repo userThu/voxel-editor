@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { VoxelWorld } from './VoxelWorld';
-import { CHUNK_SIZE, Plane } from './utils';
+import { ChunkDimensions, Plane } from './utils';
 
 export type RaycastHit = {
   voxel: [number, number, number]; // grid coords of hit voxel
@@ -9,10 +9,11 @@ export type RaycastHit = {
   // [1,0,0] [-1,0,0] [0,1,0] [0,-1,0] [0,0,1] [0,0,-1]
 } | null;
 
-const inBounds = (x: number, y: number, z: number): boolean => {
-  return x >= 0 && x < CHUNK_SIZE &&
-         y >= 0 && y < CHUNK_SIZE &&
-         z >= 0 && z < CHUNK_SIZE;
+const inBounds = (x: number, y: number, z: number, dims: ChunkDimensions): boolean => {
+    console.log(`dims.x: ${dims.x}, dims.y: ${dims.y}, dims.z: ${dims.z}`);
+    return x >= 0 && x < dims.x &&
+         y >= 0 && y < dims.y &&
+         z >= 0 && z < dims.z;
 }
 
 const mouseToNDC = (
@@ -104,16 +105,16 @@ const dda = (
 
   // Step through voxels until we exceed maxDistance
   while (Math.min(tMaxXCurrent, tMaxYCurrent, tMaxZCurrent) < maxDistance) {
-    console.log(`x: ${x}, y: ${y}, z: ${z}`);
-    if (inBounds(x, y, z)) {
+    const worldSize = world.getWorldSize();
+    if (inBounds(x, y, z, worldSize)) {
         // Check current voxel before stepping
         if (world.getVoxel({x:x, y:y, z:z})) {
             return { voxel: [x, y, z], face };
         }
     } else if (
-        (stepX > 0 && x >= CHUNK_SIZE) || (stepX < 0 && x < 0) ||
-        (stepY > 0 && y >= CHUNK_SIZE) || (stepY < 0 && y < 0) ||
-        (stepZ > 0 && z >= CHUNK_SIZE) || (stepZ < 0 && z < 0)
+        (stepX > 0 && x >= worldSize.x) || (stepX < 0 && x < 0) ||
+        (stepY > 0 && y >= worldSize.y) || (stepY < 0 && y < 0) ||
+        (stepZ > 0 && z >= worldSize.z) || (stepZ < 0 && z < 0)
     ) {
         break;
     }
@@ -138,6 +139,7 @@ const dda = (
 }
 
 const rayPlaneIntersection = (
+  world: VoxelWorld,
   origin: THREE.Vector3,
   direction: THREE.Vector3,
   activePlanes: Plane,
@@ -145,13 +147,14 @@ const rayPlaneIntersection = (
 
   let closest: [number, number, number] | null = null;
   let closestT = Infinity;
+  const worldSize = world.getWorldSize();
 
   if (activePlanes[0]) {
     const t = -origin.y / direction.y;
     if (t > 0 && t < closestT) {
       const x = Math.floor(origin.x + t * direction.x);
       const z = Math.floor(origin.z + t * direction.z);
-      if (inBounds(x, 0, z)) {
+      if (inBounds(x, 0, z, worldSize)) {
         closest = [x, 0, z];
         closestT = t;
       }
@@ -163,7 +166,7 @@ const rayPlaneIntersection = (
     if (t > 0 && t < closestT) {
       const x = Math.floor(origin.x + t * direction.x);
       const y = Math.floor(origin.y + t * direction.y);
-      if (inBounds(x, y, 0)) {
+      if (inBounds(x, y, 0, worldSize)) {
         closest = [x, y, 0];
         closestT = t;
       }
@@ -175,7 +178,7 @@ const rayPlaneIntersection = (
     if (t > 0 && t < closestT) {
       const y = Math.floor(origin.y + t * direction.y);
       const z = Math.floor(origin.z + t * direction.z);
-      if (inBounds(0, y, z)) {
+      if (inBounds(0, y, z, worldSize)) {
         closest = [0, y, z];
         closestT = t;
       }
