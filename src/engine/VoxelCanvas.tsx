@@ -33,8 +33,15 @@ export default function VoxelCanvas() {
   }, []);
     
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
-        <canvas ref={canvasRef} style={{ width: '100%', height: '100vh', display: 'block' }} />
+    <div style={{
+        position: 'fixed',    // fixed rather than relative — always fills viewport
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+      }}>
+        <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
         <Toolbar
           onToolChange={(tool: Tool) =>
             engineRef.current!.handleToolChange(tool, canvasRef.current!)}

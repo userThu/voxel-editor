@@ -99,9 +99,9 @@ class Engine {
     world.setWorldSize({ x: dims.x * 16, y: dims.y * 16, z: dims.z * 16 });
   }
 
-  handleResize(): void {
-    const w = this.renderer.domElement.clientWidth;
-    const h = this.renderer.domElement.clientHeight;
+  handleResize = (): void => {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
