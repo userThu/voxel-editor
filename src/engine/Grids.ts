@@ -7,6 +7,7 @@ const COLOR_GRID   = 0x444444;
 
 const setupChunkGrids = (scene: THREE.Scene, initialDims: ChunkDimensions = { x: 1, y: 1, z: 1 }) => {
   let grids: THREE.LineSegments[] = [];
+  let currentVisible: [boolean, boolean, boolean] = [true, true, true];
 
   const rebuild = (dims: ChunkDimensions) => {
     grids.forEach(g => {
@@ -59,13 +60,17 @@ const setupChunkGrids = (scene: THREE.Scene, initialDims: ChunkDimensions = { x:
     const yzGrid = new THREE.LineSegments(yzGeo, new THREE.LineBasicMaterial({ color: COLOR_GRID }));
 
     grids = [xzGrid, xyGrid, yzGrid];
-    grids.forEach(g => scene.add(g));
+    grids.forEach((g, i) => {
+      g.visible = currentVisible[i]; // respect current visibility
+      scene.add(g);
+    });
   };
 
   rebuild(initialDims);
 
   return {
     setVisible(visible: [boolean, boolean, boolean]) {
+      currentVisible = visible;
       grids.forEach((g, i) => g.visible = visible[i]);
     },
     resize(dims: ChunkDimensions) {
