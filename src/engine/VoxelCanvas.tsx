@@ -6,8 +6,9 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VoxelWorld } from './VoxelWorld';
 import { buildChunkMesh } from './ChunkMesh';
 import { meshChunk } from './ChunkMesher';
-import { disposeScene, Tool, Plane, ChunkDimensions } from './utils';
-import { setupMouseEvents, setupHoverHighlight, updateCursor } from './Tools';
+import { Tool, Plane, ChunkDimensions } from './utils';
+import { setupEngine } from './Engine';
+import { setupMouseEvents, updateCursor } from './Tools';
 import {setupChunkGrids} from './Grids';
 import Panel from '@/components/Panel';
 import Toolbar from '@/components/Toolbar';
@@ -69,63 +70,31 @@ export default function VoxelCanvas() {
 
   useEffect(() => {
     const canvas = canvasRef.current!;
-    // Creates WebGL context, binding to `canvas`
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    const scene = new THREE.Scene();
-    // (fov: vertical FOV, aspect: ratio of canvas width to height, near: anything closer than `near` units to camera is clipped, far: opposite of near)
-    const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
-    const controls = new OrbitControls(camera, renderer.domElement);
-    const chunkGrids = setupChunkGrids(scene);
-    chunkGridsRef.current = chunkGrids;
+    const engine = setupEngine(canvas);
 
-    // Renderer init
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight); // Sets WebGL viewport to canvas dimensions
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Physical pixels to CSS pixel
+    // Initialize references
+    chunkGridsRef.current = engine.chunkGrids;
+    controlsRef.current = engine.controls;
 
-    // Scene init
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-    scene.add(new THREE.DirectionalLight(0xffffff, 0.8));
-    scene.background = new THREE.Color(0xfffcf2);
-    
-    chunkGrids.setVisible([true, true, true]);
-
-    // Camera init
-    camera.position.set(24, 16, 24); // Places camera at world/three coordinates
-    camera.lookAt(0, 0, 0); // Rotates camera to face specified coordinates
-    
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.screenSpacePanning = false;
-    controls.minDistance = 5;
-    controls.maxDistance = 200;
-    controls.enabled = true;
-    controlsRef.current = controls;
-
-    // Controls init
+    // Initialize instances that require references
+    chunkGridsRef.current.setVisible([true, true, true]);
     controlsRef.current.mouseButtons = {
       LEFT: THREE.MOUSE.PAN,
       MIDDLE: THREE.MOUSE.DOLLY,
       RIGHT: THREE.MOUSE.ROTATE,
     };
-
-    // Lighting init
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // (color, intensity)
-    scene.add(ambientLight);
-
-    // Mouse events
-    const hoverHighlight = setupHoverHighlight(scene);
     const cleanupMouse = setupMouseEvents(
-      canvas, camera, world,
+      canvas, engine.camera, world,
       activeToolRef, activeColorRef, activePlanesRef,
-      hoverHighlight
+      engine.hoverHighlight
     );
     
     // Render loop
     let frameId: number;
     function tick() {
       frameId = requestAnimationFrame(tick);
-      controls.update();
-      renderer.render(scene, camera);
+      engine.controls.update();
+      engine.renderer.render(engine.scene, engine.camera);
 
       const deadline = performance.now() + 2;
       for (const chunkKey of world.popDirtyChunks()) {
@@ -140,40 +109,27 @@ export default function VoxelCanvas() {
         if (meshData.vertexCount === 0) {
           // Chunk is empty — remove mesh from scene and state
           if (chunkMeshes.has(chunkKey)) {
-            scene.remove(chunkMeshes.get(chunkKey)!);
+            engine.scene.remove(chunkMeshes.get(chunkKey)!);
             chunkMeshes.delete(chunkKey);
           }
           continue;
         }
 
-        buildChunkMesh(scene, chunkMeshes, chunkKey,meshData);
+        buildChunkMesh(engine.scene, chunkMeshes, chunkKey,meshData);
       }
-      renderer.render(scene, camera);
+      engine.renderer.render(engine.scene, engine.camera);
     }
     tick();
 
-    const handleResize = () => {
-      console.log("resized");
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    };
-
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', engine.handleResize);
 
     // Clean-up upon dismount
     frameId = requestAnimationFrame(tick);
     return () => {
         cleanupMouse();
-        chunkGrids.dispose();
-        hoverHighlight.dispose();
+        engine.cleanup();
         cancelAnimationFrame(frameId);
-        renderer.dispose();
-        controls.dispose();
-        disposeScene(scene);
-        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('resize', engine.handleResize);
     }
   }, []);
     

@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { setupMouseEvents, setupHoverHighlight } from './Tools';
+import {setupChunkGrids} from './Grids';
 
 export const CHUNK_SIZE = 16;
 
@@ -185,13 +188,13 @@ const parseColor = (key: string): RGBColor => {
     return [colors[0], colors[1], colors[2]] as RGBColor;
 }
 
-const disposeScene = (scene: THREE.Scene): void => {
-  scene.traverse((object) => {
-    if (object instanceof THREE.Mesh) {
-      object.geometry.dispose();
-      object.material.dispose();
-    }
-  });
-}
 
-export {getSweepAndPlaneAxes, sliceToWorld, buildQuadCorners, parseColor, disposeScene}
+
+
+
+export {
+  getSweepAndPlaneAxes, 
+  sliceToWorld, 
+  buildQuadCorners, 
+  parseColor,
+}
