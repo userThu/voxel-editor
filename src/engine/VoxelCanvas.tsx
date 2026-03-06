@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react';
 import { VoxelWorld } from './VoxelWorld';
 import { Tool, Plane, ChunkDimensions } from './utils';
-import { Engine } from './Engine.js';
+import { Engine } from './Engine';
 import Panel from '@/components/Panel';
 import Toolbar from '@/components/Toolbar';
 
