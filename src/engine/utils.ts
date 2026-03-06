@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { setupMouseEvents, setupHoverHighlight } from './Tools';
+import { setupMouseEvents, setupHoverHighlight } from './InputLogic';
 import {setupChunkGrids} from './Grids';
 
 export const CHUNK_SIZE = 16;

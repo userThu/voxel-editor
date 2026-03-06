@@ -1,19 +1,16 @@
-
-
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VoxelWorld } from './VoxelWorld';
 import { Tool, Plane } from './utils';
 import { dda, getRayFromCamera, RaycastHit, mouseToNDC, rayPlaneIntersection, inBounds } from './Raycasting';
 
 const faceRotations: Record<string, [number, number, number]> = {
-    "0,1,0":  [- Math.PI / 2, 0, 0], // top
-    "0,-1,0": [  Math.PI / 2, 0, 0], // bottom
-    "1,0,0":  [0,   Math.PI / 2, 0], // right
-    "-1,0,0": [0, - Math.PI / 2, 0], // left
-    "0,0,1":  [0, 0, 0],             // front
-    "0,0,-1": [0,   Math.PI, 0],     // back
-  };
+  "0,1,0":  [- Math.PI / 2, 0, 0], // top
+  "0,-1,0": [  Math.PI / 2, 0, 0], // bottom
+  "1,0,0":  [0,   Math.PI / 2, 0], // right
+  "-1,0,0": [0, - Math.PI / 2, 0], // left
+  "0,0,1":  [0, 0, 0],             // front
+  "0,0,-1": [0,   Math.PI, 0],     // back
+};
 
 const updateCursor = (canvas: HTMLCanvasElement, tool: Tool): void => {
   const cursors: Record<Tool, string> = {
