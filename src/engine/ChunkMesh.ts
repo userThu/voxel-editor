@@ -6,6 +6,11 @@ const material = new THREE.MeshLambertMaterial({
   vertexColors: true,  // use our per-vertex color data
 });
 
+/*
+Builds a mesh for a chunk given information on mesh vertices,
+normal/face direction, color, and indices specifiying triangle
+composition.
+*/
 function buildChunkMesh(
   scene: THREE.Scene,
   chunkMeshes: Map<string, THREE.Mesh>,

@@ -1,8 +1,3 @@
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { setupMouseEvents, setupHoverHighlight } from './InputLogic';
-import {setupChunkGrids} from './Grids';
-
 export const CHUNK_SIZE = 16;
 
 export type Plane = [boolean, boolean, boolean]; // XZ, XY, YZ
@@ -119,12 +114,6 @@ const buildQuadCorners = (
   base[axes.sweepAxis] += faceOffset;
 
   // --- Step 2: Build the four corners ---
-  // Corner layout on the 2D slice plane:
-  //
-  //   c3 ──── c2
-  //   │        │
-  //   c0 ──── c1
-  //
   // c0 = origin (no offset in U or V)
   // c1 = width along v
   // c2 = width along U + height along V
@@ -187,10 +176,6 @@ const parseColor = (key: string): RGBColor => {
     const colors = key.split(',').map(color_str => Number(color_str));
     return [colors[0], colors[1], colors[2]] as RGBColor;
 }
-
-
-
-
 
 export {
   getSweepAndPlaneAxes, 

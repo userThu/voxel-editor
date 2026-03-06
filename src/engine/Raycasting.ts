@@ -5,12 +5,9 @@ import { ChunkDimensions, Plane } from './utils';
 export type RaycastHit = {
   voxel: [number, number, number]; // grid coords of hit voxel
   face:  [number, number, number]; // normal of the face that was hit
-  // face is always one of the 6 unit vectors:
-  // [1,0,0] [-1,0,0] [0,1,0] [0,-1,0] [0,0,1] [0,0,-1]
 } | null;
 
 const inBounds = (x: number, y: number, z: number, dims: ChunkDimensions): boolean => {
-    console.log(`dims.x: ${dims.x}, dims.y: ${dims.y}, dims.z: ${dims.z}`);
     return x >= 0 && x < dims.x &&
          y >= 0 && y < dims.y &&
          z >= 0 && z < dims.z;

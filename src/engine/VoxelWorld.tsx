@@ -32,13 +32,11 @@ class VoxelWorld {
 
   setWorldSize(dims: ChunkDimensions) {
     if (dims.x % 16 === 0 && dims.y % 16 === 0 && dims.z % 16 === 0) {
-      console.log(`set worldSize: ${JSON.stringify(dims)}`);
       this.worldSize = dims;
     }
   }
 
   getWorldSize(): ChunkDimensions {
-    console.log(`get worldSize: ${JSON.stringify(this.worldSize)}`);
     return this.worldSize;
   }
 

@@ -1,8 +1,7 @@
 import * as THREE from 'three';
-import { CHUNK_SIZE, Plane, ChunkDimensions } from './utils';
+import { ChunkDimensions } from './utils';
 
 const VOXELS_PER_CHUNK = 16;
-const COLOR_CENTER = 0x888888;
 const COLOR_GRID   = 0x444444;
 
 const setupChunkGrids = (scene: THREE.Scene, initialDims: ChunkDimensions = { x: 1, y: 1, z: 1 }) => {

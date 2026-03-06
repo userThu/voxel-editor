@@ -1,6 +1,10 @@
 import {VoxelWorld, CHUNK_SIZE} from "./VoxelWorld";
 import {Coords, parseColor, MeshData, FACES, getSweepAndPlaneAxes, sliceToWorld, buildQuadCorners} from "./utils";
 
+/*
+Given a specified chunk, generate information needed to create a mesh
+representing the voxels within the chunk.
+*/
 export const meshChunk = (world: VoxelWorld, chunkCoords: Coords): MeshData => {
   const coriginCoords = {
     x: chunkCoords.x * CHUNK_SIZE,
@@ -32,16 +36,12 @@ export const meshChunk = (world: VoxelWorld, chunkCoords: Coords): MeshData => {
     // For +Z/-Z: sweep along Z, slice is X×Y
 
     const sweepAndPlaneAxes = getSweepAndPlaneAxes(face);
-    // if (face[1] === -1) {
-    //     console.log(`sweep:${sweepAndPlaneAxes.sweepAxis} u:${sweepAndPlaneAxes.uAxis} v:${sweepAndPlaneAxes.vAxis}`);
-    //   }
 
     // Iterate through every slice of the chunk in the direction of sweepAxis
     for (let sweep = 0; sweep < CHUNK_SIZE; sweep++) {
       // Build the 2D mask for this slice
       // mask[u][v] = voxel color key, or null if face not visible
 
-      // TODO: mask coordinates are on different axes
       const mask: (string | null)[][] = Array.from(
         { length: CHUNK_SIZE }, () => new Array(CHUNK_SIZE).fill(null)
       );
@@ -49,9 +49,6 @@ export const meshChunk = (world: VoxelWorld, chunkCoords: Coords): MeshData => {
       for (let u = 0; u < CHUNK_SIZE; u++) {
         for (let v = 0; v < CHUNK_SIZE; v++) {
           const objVoxelCoords = sliceToWorld(sweepAndPlaneAxes, sweep, u, v, coriginCoords);
-        //   if (face[1] === -1 && sweep === 0) {
-        //     console.log(`(u,v): (${u},${v})\nobjVoxelCoords: (x:${objVoxelCoords.x}, y:${objVoxelCoords.y}, z:${objVoxelCoords.z})`);
-        //   }
 
           const voxel = world.getVoxel(objVoxelCoords);
           if (!voxel) continue;
@@ -69,10 +66,6 @@ export const meshChunk = (world: VoxelWorld, chunkCoords: Coords): MeshData => {
           mask[u][v] = `${voxel.color[0]},${voxel.color[1]},${voxel.color[2]},${voxel.material}`;
         }
       }
-
-    //   if (face[2] === 1 && sweep === 0) {
-    //     console.log(mask);
-    //   }
 
       // Now greedily consume the mask
       const consumed: boolean[][] = Array.from({ length: CHUNK_SIZE }, () =>
@@ -104,10 +97,6 @@ export const meshChunk = (world: VoxelWorld, chunkCoords: Coords): MeshData => {
             height++;
           }
 
-        //   if (face[1] === -1 && sweep === 0) {
-        //     console.log(`(u,v): (${u},${v})\nheight: ${height}\nwidth: ${width}`);
-        //   }
-
           // Mark consumed
           for (let ku = 0; ku < height;  ku++) {
             for (let kv = 0; kv < width;  kv++) {
@@ -118,18 +107,12 @@ export const meshChunk = (world: VoxelWorld, chunkCoords: Coords): MeshData => {
           // Emit one quad for this width × height rectangle
           const anchorVoxelCoords = sliceToWorld(sweepAndPlaneAxes, sweep, u, v, coriginCoords);
           const [r,g,b] = parseColor(key);
-        //   if (face[1] === -1 && sweep === 0) {
-        //     console.log(`anchorVoxelCoords: (x:${anchorVoxelCoords.x}, y:${anchorVoxelCoords.y}, z:${anchorVoxelCoords.z})`);
-        //   }
 
           // 4 corners of the quad
           const quadCorners = buildQuadCorners(anchorVoxelCoords, face, sweepAndPlaneAxes, width, height);
 
           const vi = vertexOffset;
           for (const {x: px, y: py, z: pz} of quadCorners) {
-            // if (face[1] === -1 && sweep === 0) {
-            //     console.log(`px: ${px}, py: ${py}, pz: ${pz}`);
-            // }
             positions[vertexOffset*3]   = px;
             positions[vertexOffset*3+1] = py;
             positions[vertexOffset*3+2] = pz;
