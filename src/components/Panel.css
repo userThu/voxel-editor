@@ -1,0 +1,134 @@
+.panel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  z-index: 10;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 2px;
+}
+
+.panel-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.07);
+  margin: 6px 4px;
+}
+
+.panel-label {
+  font-family: 'DM Mono', 'Fira Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #999;
+  padding: 0 2px;
+}
+
+/* Grid plane toggles */
+.panel-plane-toggles {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+}
+
+.panel-plane-btn {
+  flex: 1;
+  height: 32px;
+  font-family: 'DM Mono', 'Fira Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: transparent;
+  color: #888;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
+  outline: none;
+}
+
+.panel-plane-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #444;
+}
+
+.panel-plane-btn.active {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #1a1a1a;
+}
+
+.panel-plane-btn:active {
+  transform: scale(0.94);
+}
+
+/* SketchPicker overrides — same as ColorPicker.css */
+.panel .sketch-picker {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  font-family: 'DM Mono', 'Fira Mono', monospace !important;
+}
+
+.panel .sketch-picker > div:first-child {
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.panel .sketch-picker input {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 6px !important;
+  color: #3a3a3a !important;
+  font-family: 'DM Mono', 'Fira Mono', monospace !important;
+  font-size: 10px !important;
+  box-shadow: none !important;
+}
+
+.panel .sketch-picker input:focus {
+  outline: none !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.panel .sketch-picker label {
+  color: #888 !important;
+  font-family: 'DM Mono', 'Fira Mono', monospace !important;
+  font-size: 9px !important;
+  letter-spacing: 0.04em !important;
+}
+
+.panel .sketch-picker > div:last-child {
+  border-top: 1px solid rgba(0, 0, 0, 0.07) !important;
+  padding-top: 8px !important;
+  margin-top: 4px !important;
+}
+
+.panel .sketch-picker span > div {
+  border-radius: 4px !important;
+  transition: transform 0.1s ease !important;
+}
+
+.panel .sketch-picker span > div:hover {
+  transform: scale(1.2) !important;
+}
