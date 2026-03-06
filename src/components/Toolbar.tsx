@@ -8,13 +8,13 @@ type Props = {
 };
 
 const TOOLS: { id: Tool; label: string; icon: string; shortcut: string }[] = [
-  { id: 'move',   label: 'Move',   icon: '✥', shortcut: 'M' },
+  { id: 'move',   label: 'Move',   icon: '✥', shortcut: 'Space' },
   { id: 'place',  label: 'Place',  icon: '✏️', shortcut: 'B' },
   { id: 'remove', label: 'Remove', icon: '⌫', shortcut: 'E' },
 ];
 
 const shortcuts: Record<string, Tool> = {
-  m: 'move',
+  ' ': 'move',
   b: 'place',
   e: 'remove',
 };

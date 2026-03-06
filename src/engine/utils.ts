@@ -2,6 +2,8 @@ import * as THREE from 'three';
 
 export const CHUNK_SIZE = 16;
 
+export type Plane = [boolean, boolean, boolean]; // XZ, XY, YZ
+
 // The three possible world axes, used as indices into [x, y, z] arrays
 export type Coords = {
     x: number;

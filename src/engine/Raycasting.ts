@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { VoxelWorld } from './VoxelWorld';
-import { CHUNK_SIZE } from './utils';
-import { plane } from 'three/examples/jsm/Addons.js';
+import { CHUNK_SIZE, Plane } from './utils';
 
 export type RaycastHit = {
   voxel: [number, number, number]; // grid coords of hit voxel
@@ -141,52 +140,49 @@ const dda = (
 const rayPlaneIntersection = (
   origin: THREE.Vector3,
   direction: THREE.Vector3,
-  planeY: number = 0
+  activePlanes: Plane,
 ): [number, number, number] | null => {
 
-  // Ray is parallel to the plane — no intersection
-  if (Math.abs(direction.y) < 0.0001) return null;
+  let closest: [number, number, number] | null = null;
+  let closestT = Infinity;
 
-  const t = (planeY - origin.y) / direction.y;
-
-  // Plane is behind the camera
-  if (t < 0) return null;
-
-  // World position of intersection
-  const x = origin.x + t * direction.x;
-  const z = origin.z + t * direction.z;
-
-  // Return the grid cell containing this point
-  if (!inBounds(Math.floor(x), planeY, Math.floor(z))) return null;
-  return [Math.floor(x), planeY, Math.floor(z)];
-}
-
-const handleRaycastHit = (
-  hit: RaycastHit,
-  world: VoxelWorld,
-  activeColor: [number, number, number],
-  action: 'place' | 'remove'
-) => {
-  if (!hit) return;
-
-  if (action === 'remove') {
-    // Remove the voxel that was hit directly
-    world.setVoxel({x:hit.voxel[0], y:hit.voxel[1], z:hit.voxel[2]}, null);
+  if (activePlanes[0]) {
+    const t = -origin.y / direction.y;
+    if (t > 0 && t < closestT) {
+      const x = Math.floor(origin.x + t * direction.x);
+      const z = Math.floor(origin.z + t * direction.z);
+      if (inBounds(x, 0, z)) {
+        closest = [x, 0, z];
+        closestT = t;
+      }
+    }
   }
 
-  if (action === 'place') {
-    // Place adjacent to the hit face using the face normal
-    // The face normal points away from the hit voxel toward empty space —
-    // exactly where the new voxel should go
-    world.setVoxel(
-      {
-        x: hit.voxel[0] + hit.face[0],
-        y: hit.voxel[1] + hit.face[1],
-        z: hit.voxel[2] + hit.face[2],
-      },
-      { color: activeColor, material: 0 }
-    );
+  if (activePlanes[1]) {
+    const t = -origin.z / direction.z;
+    if (t > 0 && t < closestT) {
+      const x = Math.floor(origin.x + t * direction.x);
+      const y = Math.floor(origin.y + t * direction.y);
+      if (inBounds(x, y, 0)) {
+        closest = [x, y, 0];
+        closestT = t;
+      }
+    }
   }
-}
 
-export { mouseToNDC, getRayFromCamera, inBounds, rayPlaneIntersection, dda, handleRaycastHit };
+  if (activePlanes[2]) {
+    const t = -origin.x / direction.x;
+    if (t > 0 && t < closestT) {
+      const y = Math.floor(origin.y + t * direction.y);
+      const z = Math.floor(origin.z + t * direction.z);
+      if (inBounds(0, y, z)) {
+        closest = [0, y, z];
+        closestT = t;
+      }
+    }
+  }
+
+  return closest;
+};
+
+export { mouseToNDC, getRayFromCamera, inBounds, dda, rayPlaneIntersection };

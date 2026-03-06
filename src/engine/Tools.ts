@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VoxelWorld } from './VoxelWorld';
-import { Tool } from './utils';
+import { Tool, Plane } from './utils';
 import { dda, getRayFromCamera, RaycastHit, mouseToNDC, rayPlaneIntersection, inBounds } from './Raycasting';
 
 const faceRotations: Record<string, [number, number, number]> = {
@@ -31,6 +31,7 @@ function setupMouseEvents(
   world: VoxelWorld,
   activeToolRef: React.RefObject<Tool>,
   activeColorRef: React.RefObject<[number, number, number]>,
+  activePlanes: React.RefObject<Plane>,
   hoverHighlight: ReturnType<typeof setupHoverHighlight>
 ): () => void {
 
@@ -52,7 +53,7 @@ function setupMouseEvents(
             world.setVoxel({ x: px, y: py, z: pz }, { color: activeColorRef.current, material: 0 });
         }
       } else {
-        const groundPos = rayPlaneIntersection(origin, direction, 0);
+        const groundPos = rayPlaneIntersection(origin, direction, activePlanes.current);
         if (groundPos) {
           world.setVoxel(
           {x:groundPos[0],
@@ -83,7 +84,7 @@ function setupMouseEvents(
     const { ndcX, ndcY } = mouseToNDC(e, canvas);
     const { origin, direction } = getRayFromCamera(ndcX, ndcY, camera);
     const hit = dda(world, origin, direction, 50);
-    const groundPos = rayPlaneIntersection(origin, direction, 0);
+    const groundPos = rayPlaneIntersection(origin, direction, activePlanes.current);
 
     hoverHighlight.update(hit, groundPos, activeColorRef.current);
   };

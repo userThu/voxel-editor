@@ -6,9 +6,10 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VoxelWorld } from './VoxelWorld';
 import { buildChunkMesh } from './ChunkMesh';
 import { meshChunk } from './ChunkMesher';
-import { disposeScene, Tool } from './utils';
+import { disposeScene, Tool, Plane } from './utils';
 import { setupMouseEvents, setupHoverHighlight, updateCursor } from './Tools';
-import ColorPicker from '@/components/ColorPicker';
+import {setupChunkGrids} from './Grids';
+import Panel from '@/components/Panel';
 import Toolbar from '@/components/Toolbar';
 
 export default function VoxelCanvas() {
@@ -19,6 +20,15 @@ export default function VoxelCanvas() {
   const activeToolRef = useRef<Tool>('move');
   const controlsRef = useRef<OrbitControls | null>(null);
   const activeColorRef = useRef<[number, number, number]>([255, 255, 255]);
+  const activePlanesRef = useRef<Plane>([true, true, true]);
+  const chunkGridsRef = useRef<ReturnType<typeof setupChunkGrids> | null>(null);
+
+  const handlePlanesChange = useCallback((planes: Plane) => {
+    activePlanesRef.current = planes;
+    if (chunkGridsRef.current) {
+        chunkGridsRef.current.setVisible(planes);
+    }
+  }, []);
 
   const handleToolChange = useCallback((tool: Tool) => {
     activeToolRef.current = tool;
@@ -56,7 +66,8 @@ export default function VoxelCanvas() {
     // (fov: vertical FOV, aspect: ratio of canvas width to height, near: anything closer than `near` units to camera is clipped, far: opposite of near)
     const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
     const controls = new OrbitControls(camera, renderer.domElement);
-    const grid = new THREE.GridHelper(16, 16, 0x444444, 0x222222);
+    const chunkGrids = setupChunkGrids(scene);
+    chunkGridsRef.current = chunkGrids;
 
     // Renderer init
     renderer.setSize(canvas.clientWidth, canvas.clientHeight); // Sets WebGL viewport to canvas dimensions
@@ -66,9 +77,8 @@ export default function VoxelCanvas() {
     scene.add(new THREE.AmbientLight(0xffffff, 0.6));
     scene.add(new THREE.DirectionalLight(0xffffff, 0.8));
     scene.background = new THREE.Color(0xfffcf2);
-
-    grid.position.set(8,0,8);
-    scene.add(grid);
+    
+    chunkGrids.setVisible([true, true, true]);
 
     // Camera init
     camera.position.set(24, 16, 24); // Places camera at world/three coordinates
@@ -97,7 +107,7 @@ export default function VoxelCanvas() {
     const hoverHighlight = setupHoverHighlight(scene);
     const cleanupMouse = setupMouseEvents(
       canvas, camera, world,
-      activeToolRef, activeColorRef,
+      activeToolRef, activeColorRef, activePlanesRef,
       hoverHighlight
     );
     
@@ -148,6 +158,7 @@ export default function VoxelCanvas() {
     frameId = requestAnimationFrame(tick);
     return () => {
         cleanupMouse();
+        chunkGrids.dispose();
         hoverHighlight.dispose();
         cancelAnimationFrame(frameId);
         renderer.dispose();
@@ -161,7 +172,7 @@ export default function VoxelCanvas() {
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
         <canvas ref={canvasRef} style={{ width: '100%', height: '100vh', display: 'block' }} />
         <Toolbar onToolChange={handleToolChange} />
-        <ColorPicker onColorChange={handleColorChange}/>
+        <Panel onColorChange={handleColorChange} onPlanesChange={handlePlanesChange}/>
     </div>
   )
 }
