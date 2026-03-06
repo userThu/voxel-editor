@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VoxelWorld } from './VoxelWorld';
 import { Tool } from './utils';
-import { dda, getRayFromCamera, RaycastHit, mouseToNDC, rayPlaneIntersection } from './Raycasting';
+import { dda, getRayFromCamera, RaycastHit, mouseToNDC, rayPlaneIntersection, inBounds } from './Raycasting';
 
 const faceRotations: Record<string, [number, number, number]> = {
     "0,1,0":  [- Math.PI / 2, 0, 0], // top
@@ -45,12 +45,12 @@ function setupMouseEvents(
     if (activeToolRef.current === 'place') {
       const hit = dda(world, origin, direction, 50);
       if (hit) {
-        world.setVoxel({
-          x:hit.voxel[0] + hit.face[0],
-          y:hit.voxel[1] + hit.face[1],
-          z:hit.voxel[2] + hit.face[2]},
-          { color: activeColorRef.current, material: 0 }
-        );
+        const px = hit.voxel[0] + hit.face[0];
+        const py = hit.voxel[1] + hit.face[1];
+        const pz = hit.voxel[2] + hit.face[2];
+        if (inBounds(px, py, pz)) {
+            world.setVoxel({ x: px, y: py, z: pz }, { color: activeColorRef.current, material: 0 });
+        }
       } else {
         const groundPos = rayPlaneIntersection(origin, direction, 0);
         if (groundPos) {

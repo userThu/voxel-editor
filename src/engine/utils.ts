@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 
+export const CHUNK_SIZE = 16;
+
 // The three possible world axes, used as indices into [x, y, z] arrays
 export type Coords = {
     x: number;

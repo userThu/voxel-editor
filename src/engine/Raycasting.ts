@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { VoxelWorld } from './VoxelWorld';
+import { CHUNK_SIZE } from './utils';
+import { plane } from 'three/examples/jsm/Addons.js';
 
 export type RaycastHit = {
   voxel: [number, number, number]; // grid coords of hit voxel
@@ -7,6 +9,12 @@ export type RaycastHit = {
   // face is always one of the 6 unit vectors:
   // [1,0,0] [-1,0,0] [0,1,0] [0,-1,0] [0,0,1] [0,0,-1]
 } | null;
+
+const inBounds = (x: number, y: number, z: number): boolean => {
+  return x >= 0 && x < CHUNK_SIZE &&
+         y >= 0 && y < CHUNK_SIZE &&
+         z >= 0 && z < CHUNK_SIZE;
+}
 
 const mouseToNDC = (
   event: MouseEvent,
@@ -97,10 +105,18 @@ const dda = (
 
   // Step through voxels until we exceed maxDistance
   while (Math.min(tMaxXCurrent, tMaxYCurrent, tMaxZCurrent) < maxDistance) {
-
-    // Check current voxel before stepping
-    if (world.getVoxel({x:x, y:y, z:z})) {
-      return { voxel: [x, y, z], face };
+    console.log(`x: ${x}, y: ${y}, z: ${z}`);
+    if (inBounds(x, y, z)) {
+        // Check current voxel before stepping
+        if (world.getVoxel({x:x, y:y, z:z})) {
+            return { voxel: [x, y, z], face };
+        }
+    } else if (
+        (stepX > 0 && x >= CHUNK_SIZE) || (stepX < 0 && x < 0) ||
+        (stepY > 0 && y >= CHUNK_SIZE) || (stepY < 0 && y < 0) ||
+        (stepZ > 0 && z >= CHUNK_SIZE) || (stepZ < 0 && z < 0)
+    ) {
+        break;
     }
 
     // Step to the nearest next boundary
@@ -141,7 +157,8 @@ const rayPlaneIntersection = (
   const z = origin.z + t * direction.z;
 
   // Return the grid cell containing this point
-  return [Math.floor(x), 0, Math.floor(z)];
+  if (!inBounds(Math.floor(x), planeY, Math.floor(z))) return null;
+  return [Math.floor(x), planeY, Math.floor(z)];
 }
 
 const handleRaycastHit = (
@@ -172,4 +189,4 @@ const handleRaycastHit = (
   }
 }
 
-export { mouseToNDC, getRayFromCamera, rayPlaneIntersection, dda, handleRaycastHit };
+export { mouseToNDC, getRayFromCamera, inBounds, rayPlaneIntersection, dda, handleRaycastHit };

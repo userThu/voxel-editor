@@ -1,6 +1,6 @@
-import {Coords, RGBColor} from "./utils";
+import {Coords, RGBColor, CHUNK_SIZE} from "./utils";
 
-const CHUNK_SIZE = 16;
+
 
 export type VoxelData = {
   color: RGBColor;
